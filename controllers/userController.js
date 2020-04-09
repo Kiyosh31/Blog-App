@@ -1,9 +1,5 @@
 const User = require("../models/User")
 
-exports.home = (req, res) => {
-  res.render("home-guest")
-}
-
 exports.register = (req, res) => {
   let user = new User(req.body)
   user.register()
@@ -17,6 +13,30 @@ exports.register = (req, res) => {
 exports.login = function (req, res) {
   let user = new User(req.body)
   user.login()
-    .then((result) => res.send(result))
-    .catch((err) => res.send(err))
+    .then(function (result) {
+      req.session.user = {
+        favColor: "blue",
+        username: user.data.username
+      }
+      req.session.save(function () {
+        res.redirect("/")
+      })
+    })
+    .catch(function (err) {
+      res.send(err)
+    })
+}
+
+exports.logout = function (req, res) {
+  req.session.destroy(function () {
+    res.redirect("/")
+  })
+}
+
+exports.home = (req, res) => {
+  if (req.session.user) {
+    res.render("home-dashboard", { username: req.session.user.username })
+  } else {
+    res.render("home-guest")
+  }
 }
