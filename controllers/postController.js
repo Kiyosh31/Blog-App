@@ -8,11 +8,13 @@ exports.viewCreateScreen = function (req, res) {
 exports.create = function (req, res) {
     let post = new Post(req.body, req.session.user._id)
     post.create()
-        .then(function () {
-            res.send("New post created")
+        .then(function (newId) {
+            req.flash("success", "New post successfully created.")
+            req.session.save(() => res.redirect(`/post/${newId}`))
         })
-        .catch(function (err) {
-            res.send(err)
+        .catch(function (errors) {
+            errors.forEach(error => req.flash("errors", error))
+            req.session.save(() => res.redirect("/create-post"))
         })
 }
 
@@ -27,8 +29,13 @@ exports.viewSingle = async function (req, res) {
 
 exports.viewEditScreen = async function (req, res) {
     try {
-        let post = await Post.findSingleById(req.params.id)
-        res.render("edit-post", { post: post })
+        let post = await Post.findSingleById(req.params.id, req.visitorId)
+        if (post.isVisitorOwner) {
+            res.render("edit-post", { post: post })
+        } else {
+            req.flash("errors", "You do not have permission to perform that action.")
+            req.session.save(() => res.redirect("/"))
+        }
     } catch {
         res.render("404")
     }
@@ -44,7 +51,7 @@ exports.edit = function (req, res) {
                 // Post was updated in database
                 req.flash("success", "Post successfully updated.")
                 req.session.save(function () {
-                    res.redirect(`/post/${req.params.id}/edit`)
+                    res.redirect(`/post/${req.params.id}`)
                 })
             } else {
                 post.errors.forEach(function (error) {
@@ -62,5 +69,17 @@ exports.edit = function (req, res) {
             req.session.save(function () {
                 res.redirect("/")
             })
+        })
+}
+
+exports.delete = function (req, res) {
+    Post.delete(req.params.id, req.visitorId)
+        .then(() => {
+            req.flash("success", "Post succesfully deleted.")
+            req.session.save(() => { res.redirect(`/profile/${req.session.user.username}`) })
+        })
+        .catch(() => {
+            req.flash("errors", "You do not have permission to perform that action.")
+            req.session.save(() => res.redirect("/"))
         })
 }
