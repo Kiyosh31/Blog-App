@@ -1,9 +1,7 @@
-const ObjectID = require("mongodb").ObjectID
-
-const usersCollection = require("../db").db().collection("users")
-const followsCollection = require("../db").db().collection("follows")
-const User = require("./User")
-
+const usersCollection = require('../db').db().collection("users")
+const followsCollection = require('../db').db().collection("follows")
+const ObjectID = require('mongodb').ObjectID
+const User = require('./User')
 
 let Follow = function (followedUsername, authorId) {
     this.followedUsername = followedUsername
@@ -11,14 +9,12 @@ let Follow = function (followedUsername, authorId) {
     this.errors = []
 }
 
-Follow.prototype.cleanUp = function () {
-    if (typeof (this.followedUsername) != "string") {
-        this.followedUsername = ""
-    }
+Follow.prototype.cleanUp = async function () {
+    if (typeof (this.followedUsername) != "string") { this.followedUsername = "" }
 }
 
 Follow.prototype.validate = async function (action) {
-    // followed username mus exist in database
+    // followedUsername must exist in database
     let followedAccount = await usersCollection.findOne({ username: this.followedUsername })
     if (followedAccount) {
         this.followedId = followedAccount._id
@@ -31,20 +27,18 @@ Follow.prototype.validate = async function (action) {
         if (doesFollowAlreadyExist) { this.errors.push("You are already following this user.") }
     }
     if (action == "delete") {
-        if (!doesFollowAlreadyExist) { this.errors.push("You cannot stop following someon that you do not already follow.") }
+        if (!doesFollowAlreadyExist) { this.errors.push("You cannot stop following someone you do not already follow.") }
     }
 
-    // Should not be able to follow yourself
-    if (this.followedId == this.authorId) {
-        this.errors.push("You cannot follow yourself")
-    }
+    // should not be able to follow yourself
+    if (this.followedId.equals(this.authorId)) { this.errors.push("You cannot follow yourself.") }
+
 }
 
 Follow.prototype.create = function () {
     return new Promise(async (resolve, reject) => {
         this.cleanUp()
         await this.validate("create")
-
         if (!this.errors.length) {
             await followsCollection.insertOne({ followedId: this.followedId, authorId: new ObjectID(this.authorId) })
             resolve()
@@ -58,7 +52,6 @@ Follow.prototype.delete = function () {
     return new Promise(async (resolve, reject) => {
         this.cleanUp()
         await this.validate("delete")
-
         if (!this.errors.length) {
             await followsCollection.deleteOne({ followedId: this.followedId, authorId: new ObjectID(this.authorId) })
             resolve()
