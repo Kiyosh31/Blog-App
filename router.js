@@ -16,6 +16,7 @@ router.post("/logout", userController.logout)
 // Profile related routes
 router.get("/profile/:username", userController.ifUserExists, userController.sharedProfiledData, userController.profilePostsScreen)
 router.get("/profile/:username/followers", userController.ifUserExists, userController.sharedProfiledData, userController.profileFollowersScreen)
+router.get("/profile/:username/following", userController.ifUserExists, userController.sharedProfiledData, userController.profileFollowingScreen)
 
 
 // Post related routes
@@ -32,6 +33,7 @@ router.post("/search", userController.mustBeLoggedIn, postController.search)
 // Follow related routes
 router.post("/addFollow/:username", userController.mustBeLoggedIn, followController.addFollow)
 router.post("/removeFollow/:username", userController.mustBeLoggedIn, followController.removeFollow)
+
 
 
 module.exports = router
