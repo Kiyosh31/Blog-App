@@ -2,7 +2,6 @@ const User = require("../models/User")
 const Post = require("../models/Post")
 const Follow = require("../models/Follow")
 
-
 exports.mustBeLoggedIn = function (req, res, next) {
   if (req.session.user) {
     next()
@@ -16,9 +15,14 @@ exports.mustBeLoggedIn = function (req, res, next) {
 
 exports.register = (req, res) => {
   let user = new User(req.body)
-  user.register()
+  user
+    .register()
     .then(() => {
-      req.session.user = { username: user.data.username, avatar: user.avatar, _id: user.data._id }
+      req.session.user = {
+        username: user.data.username,
+        avatar: user.avatar,
+        _id: user.data._id,
+      }
       req.session.save(function () {
         res.redirect("/")
       })
@@ -35,12 +39,13 @@ exports.register = (req, res) => {
 
 exports.login = function (req, res) {
   let user = new User(req.body)
-  user.login()
+  user
+    .login()
     .then(function (result) {
       req.session.user = {
         avatar: user.avatar,
         username: user.data.username,
-        _id: user.data._id
+        _id: user.data._id,
       }
       req.session.save(function () {
         res.redirect("/")
@@ -97,8 +102,8 @@ exports.profilePostsScreen = function (req, res) {
         counts: {
           postCount: req.postCount,
           followerCount: req.followerCount,
-          followingCount: req.followingCount
-        }
+          followingCount: req.followingCount,
+        },
       })
     })
     .catch(function () {
@@ -110,7 +115,10 @@ exports.sharedProfiledData = async function (req, res, next) {
   let isVisitorsProfile = false
   let isFollowing = false
   if (req.session.user) {
-    isFollowing = await Follow.isVisitorFollowing(req.profileUser._id, req.visitorId)
+    isFollowing = await Follow.isVisitorFollowing(
+      req.profileUser._id,
+      req.visitorId
+    )
     isVisitorsProfile = req.profileUser._id.equals(req.session.user._id)
   }
 
@@ -122,7 +130,11 @@ exports.sharedProfiledData = async function (req, res, next) {
   let followerCountPromise = Follow.countFollowersById(req.profileUser._id)
   let followingCountPromise = Follow.countFollowingById(req.profileUser._id)
 
-  let [postCount, followerCount, followingCount] = await Promise.all([postCountPromise, followerCountPromise, followingCountPromise])
+  let [postCount, followerCount, followingCount] = await Promise.all([
+    postCountPromise,
+    followerCountPromise,
+    followingCountPromise,
+  ])
 
   req.postCount = postCount
   req.followerCount = followerCount
@@ -144,8 +156,8 @@ exports.profileFollowersScreen = async function (req, res) {
       counts: {
         postCount: req.postCount,
         followerCount: req.followerCount,
-        followingCount: req.followingCount
-      }
+        followingCount: req.followingCount,
+      },
     })
   } catch {
     res.render("404")
@@ -165,10 +177,25 @@ exports.profileFollowingScreen = async function (req, res) {
       counts: {
         postCount: req.postCount,
         followerCount: req.followerCount,
-        followingCount: req.followingCount
-      }
+        followingCount: req.followingCount,
+      },
     })
   } catch {
     res.render("404")
   }
+}
+
+exports.doesUsernameExist = function (req, res) {
+  User.findByUsername(req.body.username)
+    .then(function () {
+      res.json(true)
+    })
+    .catch(function () {
+      res.json(false)
+    })
+}
+
+exports.doesEmailExist = async function (req, res) {
+  let emailBool = await User.doesEmailExist(req.body.email)
+  res.json(emailBool)
 }

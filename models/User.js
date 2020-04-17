@@ -1,14 +1,18 @@
 const usersCollection = require("../db").db().collection("users")
 const validator = require("validator")
-const bcrypt = require('bcryptjs')
+const bcrypt = require("bcryptjs")
 const md5 = require("md5")
 
 let User = function (data, getAvatar) {
   this.data = data
   this.errors = []
 
-  if (getAvatar == undefined) { getAvatar = false }
-  if (getAvatar) { this.getAvatar() }
+  if (getAvatar == undefined) {
+    getAvatar = false
+  }
+  if (getAvatar) {
+    this.getAvatar()
+  }
 }
 
 User.prototype.validate = function () {
@@ -42,8 +46,14 @@ User.prototype.validate = function () {
     }
 
     // Only if username is valid then check to see if it's already taken
-    if (this.data.username.length > 2 && this.data.username.length < 31 && validator.isAlphanumeric(this.data.username)) {
-      let usernameExists = await usersCollection.findOne({ username: this.data.username })
+    if (
+      this.data.username.length > 2 &&
+      this.data.username.length < 31 &&
+      validator.isAlphanumeric(this.data.username)
+    ) {
+      let usernameExists = await usersCollection.findOne({
+        username: this.data.username,
+      })
       if (usernameExists) {
         this.errors.push("That username is already taken")
       }
@@ -51,7 +61,9 @@ User.prototype.validate = function () {
 
     // Only if email is valid then check to see if it's already taken
     if (validator.isEmail(this.data.email)) {
-      let emailExists = await usersCollection.findOne({ email: this.data.email })
+      let emailExists = await usersCollection.findOne({
+        email: this.data.email,
+      })
       if (emailExists) {
         this.errors.push("That email is already being used")
       }
@@ -63,9 +75,13 @@ User.prototype.validate = function () {
 User.prototype.login = function () {
   return new Promise((resolve, reject) => {
     this.cleanUp()
-    usersCollection.findOne({ username: this.data.username })
+    usersCollection
+      .findOne({ username: this.data.username })
       .then((attemptedUser) => {
-        if (attemptedUser && bcrypt.compareSync(this.data.password, attemptedUser.password)) {
+        if (
+          attemptedUser &&
+          bcrypt.compareSync(this.data.password, attemptedUser.password)
+        ) {
           this.data = attemptedUser
           this.getAvatar()
           resolve("congrats!")
@@ -74,19 +90,19 @@ User.prototype.login = function () {
         }
       })
       .catch(() => {
-        reject('Please try again later')
+        reject("Please try again later")
       })
   })
 }
 
 User.prototype.cleanUp = function () {
-  if (typeof (this.data.username) != "string") {
+  if (typeof this.data.username != "string") {
     this.data.username = ""
   }
-  if (typeof (this.data.email) != "string") {
+  if (typeof this.data.email != "string") {
     this.data.email = ""
   }
-  if (typeof (this.data.password) != "string") {
+  if (typeof this.data.password != "string") {
     this.data.password = ""
   }
 
@@ -125,19 +141,20 @@ User.prototype.getAvatar = function () {
 
 User.findByUsername = function (username) {
   return new Promise(function (resolve, reject) {
-    if (typeof (username) != "string") {
+    if (typeof username != "string") {
       reject()
       return
     }
 
-    usersCollection.findOne({ username: username })
+    usersCollection
+      .findOne({ username: username })
       .then(function (userDoc) {
         if (userDoc) {
           userDoc = new User(userDoc, true)
           userDoc = {
             _id: userDoc.data._id,
             username: userDoc.data.username,
-            avatar: userDoc.avatar
+            avatar: userDoc.avatar,
           }
           resolve(userDoc)
         } else {
@@ -147,6 +164,22 @@ User.findByUsername = function (username) {
       .catch(function () {
         reject()
       })
+  })
+}
+
+User.doesEmailExist = function (email) {
+  return new Promise(async function (resolve, reject) {
+    if (typeof email != "string") {
+      resolve(false)
+      return
+    }
+
+    let user = await usersCollection.findOne({ email: email })
+    if (user) {
+      resolve(true)
+    } else {
+      resolve(false)
+    }
   })
 }
 
