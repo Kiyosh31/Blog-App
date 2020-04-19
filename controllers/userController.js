@@ -89,7 +89,6 @@ exports.home = async (req, res) => {
         avatar: User.getUserAvatar(user.email),
       })
     })
-    console.log(users)
 
     res.render("home-dashboard", { posts: posts, users: users })
   } else {
