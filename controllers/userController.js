@@ -84,10 +84,12 @@ exports.home = async (req, res) => {
     let allUsers = await User.getAllUsers()
     let users = []
     allUsers.forEach((user) => {
-      users.push({
-        username: user.username,
-        avatar: User.getUserAvatar(user.email),
-      })
+      if (req.session.user._id != user._id) {
+        users.push({
+          username: user.username,
+          avatar: User.getUserAvatar(user.email),
+        })
+      }
     })
 
     res.render("home-dashboard", { posts: posts, users: users })
