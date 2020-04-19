@@ -80,7 +80,18 @@ exports.home = async (req, res) => {
     // Fetch feed of posts for current user
     let posts = await Post.getFeed(req.session.user._id)
 
-    res.render("home-dashboard", { posts: posts })
+    // show all the users to make new friends
+    let allUsers = await User.getAllUsers()
+    let users = []
+    allUsers.forEach((user) => {
+      users.push({
+        username: user.username,
+        avatar: User.getUserAvatar(user.email),
+      })
+    })
+    console.log(users)
+
+    res.render("home-dashboard", { posts: posts, users: users })
   } else {
     res.render("home-guest", { regErrors: req.flash("regErrors") })
   }

@@ -183,4 +183,15 @@ User.doesEmailExist = function (email) {
   })
 }
 
+User.getAllUsers = function () {
+  return new Promise(async (resolve, reject) => {
+    let users = await usersCollection.find({}).toArray()
+    resolve(users)
+  })
+}
+
+User.getUserAvatar = function (email) {
+  return `https://gravatar.com/avatar/${md5(email)}?s=128`
+}
+
 module.exports = User
