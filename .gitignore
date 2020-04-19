@@ -2,3 +2,4 @@ node_modules/
 package-lock.json
 node.log
 .env
+main-bundled.js
